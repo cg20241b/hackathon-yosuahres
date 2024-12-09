@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import './App.css';
 
 function App() {
@@ -24,6 +27,7 @@ function App() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
@@ -61,14 +65,49 @@ function App() {
       textMesh0.position.x = 1;
       scene.add(textMesh0);
 
+      // glowing cube
+      const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); 
+      const cubeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff, 
+        emissiveIntensity: 5, 
+      });
+      const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+      scene.add(cube);
+
+      const wireframeGeometry = new THREE.WireframeGeometry(cubeGeometry);
+      const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+      const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+      cube.add(wireframe);
+
+      const pointLight = new THREE.PointLight(0xffffff, 20, 500); 
+      pointLight.position.copy(cube.position);
+      scene.add(pointLight);
+
+      const digitLight = new THREE.PointLight(0xffffff, 10, 100);
+      digitLight.position.set(1, 0, 5); 
+      scene.add(digitLight);
+
       // add ambient to scene
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.470);
       scene.add(ambientLight);
 
+      const composer = new EffectComposer(renderer);
+      const renderPass = new RenderPass(scene, camera);
+      composer.addPass(renderPass);
+
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        2.0, 
+        0.4, 
+        0.85 
+      );
+      composer.addPass(bloomPass);
+
       // render
       const animate = () => {
         requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+        composer.render();
       };
       animate();
 
