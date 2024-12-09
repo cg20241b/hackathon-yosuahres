@@ -104,6 +104,27 @@ function App() {
       );
       composer.addPass(bloomPass);
 
+      //movement
+      const handleKeyDown = (event: KeyboardEvent) => {
+        switch (event.key) {
+          case 'w':
+            cube.position.y += 0.1;
+            break;
+          case 's':
+            cube.position.y -= 0.1;
+            break;
+          case 'a':
+            camera.position.x += 0.1;
+            break;
+          case 'd':
+            camera.position.x -= 0.1;
+            break;
+        }
+        //update light
+        pointLight.position.copy(cube.position);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
       // render
       const animate = () => {
         requestAnimationFrame(animate);
@@ -113,6 +134,7 @@ function App() {
 
       return () => {
         window.removeEventListener('resize', handleResize);
+        window.removeEventListener('keydown', handleKeyDown);
         if (threeRef.current) {
           threeRef.current.removeChild(renderer.domElement);
         }
